@@ -13,15 +13,18 @@ export async function GET() {
 
     const transactions = await prisma.transaction.findMany({
       where: { userId: user.id },
-      orderBy: [{ txnDate: "desc" }, { createdAt: "desc" }],
       select: {
         id: true,
         direction: true,
         amount: true,
         txnDate: true,
         description: true,
-        category: { select: { id: true, name: true, type: true } },
+        createdAt: true,
+        category: {
+          select: { id: true, name: true, type: true },
+        },
       },
+      orderBy: [{ txnDate: "desc" }, { createdAt: "desc" }],
       take: 50,
     });
 
