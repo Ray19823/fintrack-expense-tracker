@@ -145,3 +145,133 @@ export async function POST(request) {
     return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
+
+// PUT /api/transactions
+export async function PUT(req) {
+  try {
+    const body = await req.json();
+
+    const {
+      userEmail = "default@fintrack.local",
+      transactionId,
+      categoryId,
+      direction,
+      amount,
+      txnDate,
+      description,
+    } = body ?? {};
+
+    if (!transactionId) {
+      return Response.json({ error: "transactionId is required" }, { status: 400 });
+    }
+
+    // Find user
+    const user = await prisma.user.findFirst({
+      where: { email: userEmail },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return Response.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Ensure the transaction belongs to this user
+    const existing = await prisma.transaction.findFirst({
+      where: { id: transactionId, userId: user.id },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return Response.json({ error: "Transaction not found" }, { status: 404 });
+    }
+
+    // Build update object (only update fields that were provided)
+    const data = {};
+
+    if (categoryId) data.categoryId = categoryId;
+    if (direction) data.direction = direction;
+
+    if (amount !== undefined && amount !== null) {
+      const num = typeof amount === "string" ? Number(amount) : amount;
+      if (!Number.isFinite(num) || num <= 0) {
+        return Response.json({ error: "amount must be a positive number" }, { status: 400 });
+      }
+      data.amount = String(num);
+    }
+
+    if (txnDate) {
+      const d = new Date(txnDate);
+      if (Number.isNaN(d.getTime())) {
+        return Response.json({ error: "txnDate must be a valid date" }, { status: 400 });
+      }
+      data.txnDate = d;
+    }
+
+    if (description !== undefined) {
+      data.description = description === "" ? null : description;
+    }
+
+    // Nothing to update?
+    if (Object.keys(data).length === 0) {
+      return Response.json({ error: "No fields provided to update" }, { status: 400 });
+    }
+
+    const updated = await prisma.transaction.update({
+      where: { id: transactionId },
+      data,
+      select: {
+        id: true,
+        direction: true,
+        amount: true,
+        txnDate: true,
+        description: true,
+        updatedAt: true,
+        category: { select: { id: true, name: true, type: true } },
+      },
+    });
+
+    return Response.json({ transaction: updated });
+  } catch (err) {
+    console.error(err);
+    return Response.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+// DELETE /api/transactions
+export async function DELETE(req) {
+  try {
+    const body = await req.json();
+
+    const {
+      userEmail = "default@fintrack.local",
+      transactionId,
+    } = body ?? {};
+
+    if (!transactionId) {
+      return Response.json({ error: "transactionId is required" }, { status: 400 });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { email: userEmail },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return Response.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Only delete if it belongs to the user
+    const deleted = await prisma.transaction.deleteMany({
+      where: { id: transactionId, userId: user.id },
+    });
+
+    if (deleted.count === 0) {
+      return Response.json({ error: "Transaction not found" }, { status: 404 });
+    }
+
+    return Response.json({ success: true, deletedCount: deleted.count });
+  } catch (err) {
+    console.error(err);
+    return Response.json({ error: "Server error" }, { status: 500 });
+  }
+}
