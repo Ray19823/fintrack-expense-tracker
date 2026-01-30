@@ -188,15 +188,38 @@ export async function PUT(req) {
     // Build update object (only update fields that were provided)
     const data = {};
 
-    if (categoryId) data.categoryId = categoryId;
-    if (direction) data.direction = direction;
+    if (categoryId) {
+    const cat = await prisma.category.findFirst({
+    where: { id: categoryId, userId: user.id },
+    select: { id: true },
+  });
+
+    if (!cat) {
+    return Response.json(
+      { error: "Category not found for this user" },
+      { status: 404 }
+    );
+   }
+
+    data.categoryId = cat.id;
+  }
+
+    if (direction) {
+    if (direction !== "INCOME" && direction !== "EXPENSE") {
+    return Response.json(
+      { error: "direction must be INCOME or EXPENSE" },
+      { status: 400 }
+    );
+   }
+    data.direction = direction;
+  }
 
     if (amount !== undefined && amount !== null) {
       const num = typeof amount === "string" ? Number(amount) : amount;
       if (!Number.isFinite(num) || num <= 0) {
         return Response.json({ error: "amount must be a positive number" }, { status: 400 });
       }
-      data.amount = String(num);
+      data.amount = num.toFixed(2);
     }
 
     if (txnDate) {
