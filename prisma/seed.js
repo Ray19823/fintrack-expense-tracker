@@ -115,8 +115,7 @@
       },
     ];
 
-    
-
+    // ✅ Step 4: insert data(sample transactions)
     for (const t of sampleTxns) {
       const exists = await prisma.transaction.findFirst({
         where: t,

@@ -7,15 +7,23 @@
     "npm": ">=10"
   },
   "scripts": {
-    "prepare": "husky",
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint .",
-    "prisma:generate": "prisma generate",
-    "check": "npm run lint && npm run build",
-    "postinstall": "prisma generate"
+  "prepare": "husky",
+
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+
+  "lint": "eslint .",
+  "check": "npm run lint && npm run build",
+
+  "prisma:generate": "node --env-file=.env ./node_modules/prisma/build/index.js generate",
+  "prisma:migrate": "node --env-file=.env ./node_modules/prisma/build/index.js migrate dev",
+  "prisma:studio": "node --env-file=.env ./node_modules/prisma/build/index.js studio",
+  "prisma:seed": "node --env-file=.env ./node_modules/prisma/build/index.js db seed",
+
+  "postinstall": "node --env-file=.env ./node_modules/prisma/build/index.js generate"
   },
+  
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": "eslint --fix"
   },
