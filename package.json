@@ -21,7 +21,7 @@
   "prisma:studio": "node --env-file=.env ./node_modules/prisma/build/index.js studio",
   "prisma:seed": "node --env-file=.env ./node_modules/prisma/build/index.js db seed",
 
-  "postinstall": "node --env-file=.env ./node_modules/prisma/build/index.js generate"
+  "postinstall": "sh -c 'if [ -f .env ]; then node --env-file=.env ./node_modules/prisma/build/index.js generate; else node ./node_modules/prisma/build/index.js generate; fi'"
   },
   
   "lint-staged": {
