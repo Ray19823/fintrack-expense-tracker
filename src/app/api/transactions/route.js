@@ -1,18 +1,29 @@
 import { prisma } from "@/lib/prisma";
 
-// GET /api/transactions
-export async function GET() {
+// GET /api/transactions?take=20&cursor=<txnId>&userEmail=...
+export async function GET(request) {
   try {
+    const url = new URL(request.url);
+
+    const takeRaw = url.searchParams.get("take");
+    const cursor = url.searchParams.get("cursor"); //transactionId cursor
+    const userEmail = url.searchParams.get("userEmail") ?? "default@fintrack.local";
+
+    // Resolve user (temporary approach until auth exists)
+    const take = Math.min(100, Math.max(1, Number.parseInt(takeRaw ?? "20", 10))
+    );
+
     const user = await prisma.user.findFirst({
-      where: { email: "default@fintrack.local" },
+      where: { email: userEmail },
       select: { id: true },
     });
 
     if (!user) {
-      return Response.json({ error: "Default user not found" }, { status: 500 });
+      return Response.json({ error: "User not found" }, { status: 404 });
     }
 
-    const transactions = await prisma.transaction.findMany({
+    // Fetch take + 1 to knnow if there is a next page
+    const rows = await prisma.transaction.findMany({
       where: { userId: user.id },
       select: {
         id: true,
@@ -25,11 +36,28 @@ export async function GET() {
           select: { id: true, name: true, type: true },
         },
       },
-      orderBy: [{ txnDate: "desc" }, { createdAt: "desc" }],
-      take: 50,
-    });
+      orderBy: [{ txnDate: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+      take: take + 1,
+      ...(cursor
+        ? {
+           cursor: { id: cursor },
+           skip: 1, // skip the cursor row itself
+          }
+        : {}),
+        });
 
-    return Response.json({ transactions });
+    const hasNextPage = rows.length > take;
+    const transactions = hasNextPage ? rows.slice(0, take) : rows;
+
+    const nextCursor = hasNextPage
+      ? transactions[transactions.length - 1]?.id ?? null
+      : null;
+
+    return Response.json({ 
+      transactions, 
+      pageInfo: { take, nextCursor, hasNextPage, 
+      },
+     });
   } catch (err) {
     console.error(err);
     return Response.json({ error: "Server error" }, { status: 500 });
