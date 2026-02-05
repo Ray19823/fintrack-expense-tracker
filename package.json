@@ -7,23 +7,18 @@
     "npm": ">=10"
   },
   "scripts": {
-  "prepare": "husky",
-
-  "dev": "next dev",
-  "build": "next build",
-  "start": "next start",
-
-  "lint": "eslint .",
-  "check": "npm run lint && npm run build",
-
-  "prisma:generate": "node --env-file=.env ./node_modules/prisma/build/index.js generate",
-  "prisma:migrate": "node --env-file=.env ./node_modules/prisma/build/index.js migrate dev",
-  "prisma:studio": "node --env-file=.env ./node_modules/prisma/build/index.js studio",
-  "prisma:seed": "node --env-file=.env ./node_modules/prisma/build/index.js db seed",
-
-  "postinstall": "sh -c 'if [ -f .env ]; then node --env-file=.env ./node_modules/prisma/build/index.js generate; else node ./node_modules/prisma/build/index.js generate; fi'"
+    "prepare": "husky",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "check": "npm run lint && npm run build",
+    "prisma:generate": "node --env-file=.env ./node_modules/prisma/build/index.js generate",
+    "prisma:migrate": "node --env-file=.env ./node_modules/prisma/build/index.js migrate dev",
+    "prisma:studio": "node --env-file=.env ./node_modules/prisma/build/index.js studio",
+    "prisma:seed": "node --env-file=.env ./node_modules/prisma/build/index.js db seed",
+    "postinstall": "sh -c 'if [ -f .env ]; then node --env-file=.env ./node_modules/prisma/build/index.js generate; else node ./node_modules/prisma/build/index.js generate; fi'"
   },
-  
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": "eslint --fix"
   },
@@ -33,10 +28,12 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
+    "chart.js": "^4.5.1",
     "next": "16.1.4",
     "pg": "^8.17.2",
     "prisma": "^7.3.0",
     "react": "19.2.3",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
