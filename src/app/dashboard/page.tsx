@@ -114,14 +114,15 @@ export default function DashboardPage() {
   const hasItems = (data?.items?.length ?? 0) > 0;
 
   return (
-    <main style={{ padding: 24, fontFamily: "system-ui" }}>
+    <main className="container">
       <h1 style={{ marginBottom: 8 }}>FinTrack Dashboard</h1>
       <p style={{ marginTop: 0, color: "#666" }}>
         Category breakdown (pie chart) powered by your aggregation API.
       </p>
 
       {/* Controls */}
-      <div
+      <div className="card">
+        <div
         style={{
           display: "flex",
           gap: 12,
@@ -134,6 +135,7 @@ export default function DashboardPage() {
         }}
       >
         <div>
+        </div>
           <label style={{ display: "block", fontSize: 12, color: "#666" }}>
             Direction
           </label>
@@ -210,7 +212,7 @@ export default function DashboardPage() {
       {loading && <p>Loading summary…</p>}
 
       {!loading && data && (
-        <>
+        <div className="card" style={{ marginTop: 16 }}>
           <p style={{ marginTop: 0 }}>
             <strong>Grand total:</strong> {Number(data.grandTotal).toFixed(2)}
           </p>
@@ -222,7 +224,7 @@ export default function DashboardPage() {
               <Pie data={chartData} options={options} />
             </div>
           )}
-        </>
+        </div>
       )}
     </main>
   );
