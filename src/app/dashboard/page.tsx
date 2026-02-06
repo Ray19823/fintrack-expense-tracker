@@ -128,10 +128,6 @@ export default function DashboardPage() {
           gap: 12,
           flexWrap: "wrap",
           alignItems: "end",
-          margin: "16px 0",
-          padding: 12,
-          border: "1px solid #eee",
-          borderRadius: 10,
         }}
       >
         <div>
