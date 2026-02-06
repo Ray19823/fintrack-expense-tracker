@@ -114,65 +114,122 @@ export default function DashboardPage() {
   const hasItems = (data?.items?.length ?? 0) > 0;
 
   return (
-    <main className="container">
-      <h1 style={{ marginBottom: 8 }}>FinTrack Dashboard</h1>
-      <p style={{ marginTop: 0, color: "#666" }}>
-  Category breakdown (pie chart) powered by my aggregation API.
-</p>
+  <main className="container">
+    <h1 style={{ marginBottom: 8 }}>FinTrack Dashboard</h1>
+    <p style={{ marginTop: 0, color: "#666" }}>
+      Category breakdown (pie chart) powered by my aggregation API.
+    </p>
 
-<div className="stack16">
-  {/* Filters */}
-  <div className="card">
-    <h2 className="cardTitle">Filters</h2>
+    <div className="stack16">
+      {/* Filters */}
+      <div className="card">
+        <h2 className="cardTitle">Filters</h2>
 
-    <div
-      style={{
-        display: "flex",
-        gap: 12,
-        flexWrap: "wrap",
-        alignItems: "end",
-      }}
-    >
-      {/* direction / from / to / button */}
-    </div>
-  </div>
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            flexWrap: "wrap",
+            alignItems: "end",
+          }}
+        >
+          <div>
+            <label style={{ display: "block", fontSize: 12, color: "#666" }}>
+              Direction
+            </label>
+            <select
+              value={direction}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "EXPENSE" || v === "INCOME") setDirection(v);
+              }}
+              style={{ padding: 8 }}
+            >
+              <option value="EXPENSE">EXPENSE</option>
+              <option value="INCOME">INCOME</option>
+            </select>
+          </div>
 
-  {/* Status */}
-  {error && (
-    <div
-      style={{
-        padding: 12,
-        borderRadius: 10,
-        background: "#fff5f5",
-        border: "1px solid #ffd6d6",
-        color: "#b00020",
-      }}
-    >
-      {error}
-    </div>
-  )}
+          <div>
+            <label style={{ display: "block", fontSize: 12, color: "#666" }}>
+              From (optional)
+            </label>
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              style={{ padding: 8 }}
+            />
+          </div>
 
-  {loading && <p>Loading summary…</p>}
+          <div>
+            <label style={{ display: "block", fontSize: 12, color: "#666" }}>
+              To (optional)
+            </label>
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              style={{ padding: 8 }}
+            />
+          </div>
 
-  {/* Chart */}
-  {!loading && data && (
-    <div className="card">
-      <h2 className="cardTitle">Category Breakdown</h2>
+          <button
+            onClick={loadSummary}
+            disabled={loading}
+            style={{
+              padding: "9px 14px",
+              borderRadius: 8,
+              border: "1px solid #ddd",
+              background: loading ? "#f5f5f5" : "white",
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+          >
+            {loading ? "Loading..." : "Apply range"}
+          </button>
+        </div>
+      </div>
 
-      <p style={{ marginTop: 0 }}>
-        <strong>Grand total:</strong>{" "}
-        {Number(data.grandTotal).toFixed(2)}
-      </p>
-
-      {!hasItems ? (
-        <p>No data for this filter yet.</p>
-      ) : (
-        <div style={{ maxWidth: 820 }}>
-          <Pie data={chartData} options={options} />
+      {/* Status */}
+      {error && (
+        <div
+          style={{
+            padding: 12,
+            borderRadius: 10,
+            background: "#fff5f5",
+            border: "1px solid #ffd6d6",
+            color: "#b00020",
+          }}
+        >
+          {error}
         </div>
       )}
-    </div>
-  )}
+
+      {/* Chart (always show the card; content changes inside) */}
+      <div className="card">
+        <h2 className="cardTitle">Category Breakdown</h2>
+
+        {loading ? (
+          <p>Loading summary…</p>
+        ) : !data ? (
+          <p>No data yet.</p>
+        ) : (
+          <>
+            <p style={{ marginTop: 0 }}>
+              <strong>Grand total:</strong> {Number(data.grandTotal).toFixed(2)}
+            </p>
+
+            {!hasItems ? (
+              <p>No data for this filter yet.</p>
+            ) : (
+              <div style={{ maxWidth: 820 }}>
+                <Pie data={chartData} options={options} />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+        {/* END chart card */}
 </div>
     {/* END stack */}
     </main>
