@@ -73,28 +73,47 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [direction, from, to]);
 
-  const chartData = useMemo(() => {
-    const labels = (data?.items ?? []).map((x) => x.categoryName);
+ const chartData = useMemo(() => {
+  const labels = (data?.items ?? []).map((x) => x.categoryName);
+  const values = (data?.items ?? []).map((x) => Number(x.total) || 0);
 
-    // Convert totals (strings) to numbers for chart
-    const values = (data?.items ?? []).map((x) => Number(x.total) || 0);
+  const COLORS = [
+    "#6366f1", // indigo
+    "#22c55e", // green
+    "#f97316", // orange
+    "#ef4444", // red
+    "#06b6d4", // cyan
+    "#a855f7", // purple
+  ];
 
-    return {
-      labels,
-      datasets: [
-        {
-          label: `${direction} by category`,
-          data: values,
-        },
-      ],
-    };
-  }, [data, direction]);
+  return {
+    labels,
+    datasets: [
+      {
+        label: `${direction} by category`,
+        data: values,
+        backgroundColor: COLORS.slice(0, values.length),
+        hoverBackgroundColor: COLORS
+          .slice(0, values.length)
+          .map((c) => c + "CC"), // subtle hover
+        borderWidth: 1,
+      },
+    ],
+  };
+}, [data, direction]);
 
   const options: ChartOptions<"pie"> = useMemo(
     () => ({
       responsive: true,
       plugins: {
-        legend: { position: "right" },
+        legend: {
+  position: "right",
+  labels: {
+    boxWidth: 12,
+    padding: 14,
+  },
+},
+
         tooltip: {
           callbacks: {
             label: (ctx) => {
