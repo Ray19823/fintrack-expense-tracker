@@ -1,5 +1,6 @@
-/* globals.css */
+@import "tailwindcss";
 
+/* globals.css */
 :root {
   --bg: #fafafa;
   --card: #ffffff;

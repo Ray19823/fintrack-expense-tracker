@@ -76,27 +76,22 @@ export default function DashboardPage() {
  const chartData = useMemo(() => {
   const labels = (data?.items ?? []).map((x) => x.categoryName);
   const values = (data?.items ?? []).map((x) => Number(x.total) || 0);
-
-  const COLORS = [
-    "#6366f1", // indigo
-    "#22c55e", // green
-    "#f97316", // orange
-    "#ef4444", // red
-    "#06b6d4", // cyan
-    "#a855f7", // purple
-  ];
-
+  
   return {
     labels,
     datasets: [
       {
         label: `${direction} by category`,
         data: values,
-        backgroundColor: COLORS.slice(0, values.length),
-        hoverBackgroundColor: COLORS
-          .slice(0, values.length)
-          .map((c) => c + "CC"), // subtle hover
-        borderWidth: 1,
+        backgroundColor: [
+         "#6366f1", // indigo
+         "#22c55e", // green
+         "#f97316", // orange
+         "#ef4444", // red
+         "#06b6d4", // cyan
+         "#a855f7", // purple
+      ],
+       borderWidth: 0,
       },
     ],
   };
@@ -110,7 +105,9 @@ export default function DashboardPage() {
   position: "right",
   labels: {
     boxWidth: 12,
-    padding: 14,
+    boxHeight: 12,
+    padding: 16,
+    color: "374151", // slate-700
   },
 },
 
