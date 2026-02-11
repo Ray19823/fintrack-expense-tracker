@@ -131,7 +131,7 @@ export default function DashboardPage() {
 
   return (
   <main className="container">
-    <h1 style={{ marginBottom: 8 }}>FinTrack Dashboard</h1>
+    <h1 style={{ marginBottom: 4, fontSize: 28 }}>FinTrack Dashboard</h1>
     <p style={{ marginTop: 0, color: "#666" }}>
       Category breakdown (pie chart) powered by my aggregation API.
     </p>
@@ -215,6 +215,7 @@ export default function DashboardPage() {
             background: "#fff5f5",
             border: "1px solid #ffd6d6",
             color: "#b00020",
+            fontSize: 14,
           }}
         >
           {error}
@@ -231,7 +232,7 @@ export default function DashboardPage() {
           <p>No data yet.</p>
         ) : (
           <>
-            <p style={{ marginTop: 0 }}>
+            <p style={{ marginTop: 0, marginBottom: 12 }}>
               <strong>Grand total:</strong> {Number(data.grandTotal).toFixed(2)}
             </p>
 
