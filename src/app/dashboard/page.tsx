@@ -136,6 +136,43 @@ export default function DashboardPage() {
       Category breakdown (pie chart) powered by my aggregation API.
     </p>
 
+
+    {data && (
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+      gap: 16,
+      marginTop: 16,
+      marginBottom: 16,
+    }}
+  >
+    <div className="card">
+      <div style={{ fontSize: 12, color: "#6b7280" }}>Total Income</div>
+      <div style={{ fontSize: 22, fontWeight: 700 }}>
+        {/* placeholder for now */}
+        —
+      </div>
+    </div>
+
+    <div className="card">
+      <div style={{ fontSize: 12, color: "#6b7280" }}>Total Expense</div>
+      <div style={{ fontSize: 22, fontWeight: 700 }}>—</div>
+    </div>
+
+    <div className="card">
+      <div style={{ fontSize: 12, color: "#6b7280" }}>Net Cashflow</div>
+      <div style={{ fontSize: 22, fontWeight: 700 }}>—</div>
+    </div>
+
+    <div className="card">
+      <div style={{ fontSize: 12, color: "#6b7280" }}>Transactions</div>
+      <div style={{ fontSize: 22, fontWeight: 700 }}>—</div>
+    </div>
+  </div>
+)}
+
+
     <div className="stack16">
       {/* Filters */}
       <div className="card">
