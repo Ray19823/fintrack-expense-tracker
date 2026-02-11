@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -38,10 +38,22 @@ type MetricsResponse = {
   };
 };
 
+function getTodayLocalIsoDate(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function DashboardPage() {
   const [direction, setDirection] = useState<Direction>("EXPENSE");
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
+  const [dateResetKey, setDateResetKey] = useState(0);
+
+  const fromRef = useRef<HTMLInputElement>(null);
+  const toRef = useRef<HTMLInputElement>(null);
 
   const [data, setData] = useState<SummaryResponse | null>(null);
   const [metrics, setMetrics] = useState<MetricsResponse | null>(null);
@@ -49,15 +61,18 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
-  async function loadDashboard() {
+  async function loadDashboard(overrides?: { from?: string; to?: string }) {
     setLoading(true);
     setError("");
 
     try {
+      const fromVal = overrides?.from ?? from;
+      const toVal = overrides?.to ?? to;
+
       // shared date range params
       const rangeParams = new URLSearchParams();
-      if (from) rangeParams.set("from", from);
-      if (to) rangeParams.set("to", to);
+      if (fromVal) rangeParams.set("from", fromVal);
+      if (toVal) rangeParams.set("to", toVal);
 
       // 1) Summary (pie) = direction + range
       const summaryParams = new URLSearchParams(rangeParams);
@@ -250,28 +265,123 @@ export default function DashboardPage() {
               <label style={{ display: "block", fontSize: 12, color: "#666" }}>
                 From (optional)
               </label>
-              <input
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                style={{ padding: 8 }}
-              />
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ position: "relative" }}>
+                  {!from && (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: "absolute",
+                        left: 8,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        color: "#9ca3af",
+                        fontSize: 12,
+                        pointerEvents: "none",
+                      }}
+                    >
+                      dd/mm/yyyy
+                    </span>
+                  )}
+                  <input
+                    type="date"
+                    key={`from-${dateResetKey}-${from || "empty"}`}
+                    ref={fromRef}
+                    value={from || ""}
+                    onChange={(e) => setFrom(e.target.value)}
+                    style={{
+                      padding: 8,
+                      color: from ? "inherit" : "transparent",
+                      WebkitTextFillColor: from ? "inherit" : "transparent",
+                    }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFrom("");
+                    setDateResetKey((k) => k + 1);
+                    if (fromRef.current) fromRef.current.value = "";
+                  }}
+                  disabled={loading || !from}
+                  aria-label="Clear from date"
+                  title="Clear"
+                  style={{
+                    padding: "6px 8px",
+                    borderRadius: 6,
+                    border: "1px solid #ddd",
+                    background: "white",
+                    cursor: loading || !from ? "not-allowed" : "pointer",
+                    lineHeight: 1,
+                  }}
+                >
+                  x
+                </button>
+              </div>
             </div>
 
             <div>
               <label style={{ display: "block", fontSize: 12, color: "#666" }}>
                 To (optional)
               </label>
-              <input
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                style={{ padding: 8 }}
-              />
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ position: "relative" }}>
+                  {!to && (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: "absolute",
+                        left: 8,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        color: "#9ca3af",
+                        fontSize: 12,
+                        pointerEvents: "none",
+                      }}
+                    >
+                      dd/mm/yyyy
+                    </span>
+                  )}
+                  <input
+                    type="date"
+                    key={`to-${dateResetKey}-${to || "empty"}`}
+                    ref={toRef}
+                    value={to || ""}
+                    onChange={(e) => setTo(e.target.value)}
+                    style={{
+                      padding: 8,
+                      color: to ? "inherit" : "transparent",
+                      WebkitTextFillColor: to ? "inherit" : "transparent",
+                    }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTo("");
+                    setDateResetKey((k) => k + 1);
+                    if (toRef.current) toRef.current.value = "";
+                  }}
+                  disabled={loading || !to}
+                  aria-label="Clear to date"
+                  title="Clear"
+                  style={{
+                    padding: "6px 8px",
+                    borderRadius: 6,
+                    border: "1px solid #ddd",
+                    background: "white",
+                    cursor: loading || !to ? "not-allowed" : "pointer",
+                    lineHeight: 1,
+                  }}
+                >
+                  x
+                </button>
+              </div>
             </div>
 
             <button
-              onClick={loadDashboard}
+              type="button"
+              onClick={() => loadDashboard()}
               disabled={loading}
               style={{
                 padding: "9px 14px",
@@ -282,6 +392,50 @@ export default function DashboardPage() {
               }}
             >
               {loading ? "Loading..." : "Apply range"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFrom("");
+                setTo("");
+                setDateResetKey((k) => k + 1);
+                if (fromRef.current) fromRef.current.value = "";
+                if (toRef.current) toRef.current.value = "";
+                loadDashboard({ from: "", to: "" });
+              }}
+              disabled={loading}
+              style={{
+                padding: "9px 14px",
+                borderRadius: 8,
+                border: "1px solid #ddd",
+                background: "white",
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const today = getTodayLocalIsoDate();
+                setFrom(today);
+                setTo(today);
+                setDateResetKey((k) => k + 1);
+                if (fromRef.current) fromRef.current.value = today;
+                if (toRef.current) toRef.current.value = today;
+                loadDashboard({ from: today, to: today });
+              }}
+              disabled={loading}
+              style={{
+                padding: "9px 14px",
+                borderRadius: 8,
+                border: "1px solid #111827",
+                background: loading ? "#e5e7eb" : "#111827",
+                color: loading ? "#6b7280" : "#ffffff",
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
+            >
+              Today
             </button>
           </div>
         </div>

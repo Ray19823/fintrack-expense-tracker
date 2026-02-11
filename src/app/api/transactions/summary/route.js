@@ -24,7 +24,7 @@ export async function GET(request) {
     if (!direction) {
       return Response.json(
         { error: "direction must be INCOME or EXPENSE" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -44,24 +44,26 @@ export async function GET(request) {
     // Optional date range (inclusive)
     const txnDateFilter = {};
     if (from) {
-      const d = new Date(`${from}T00:00:00.000Z`);
+      const d = new Date(`${from}T00:00:00`);
       if (Number.isNaN(d.getTime())) {
         return Response.json(
           { error: "from must be YYYY-MM-DD" },
-          { status: 400 }
+          { status: 400 },
         );
       }
       txnDateFilter.gte = d;
     }
     if (to) {
-      const d = new Date(`${to}T00:00:00.000Z`);
+      const d = new Date(`${to}T00:00:00`);
       if (Number.isNaN(d.getTime())) {
         return Response.json(
           { error: "to must be YYYY-MM-DD" },
-          { status: 400 }
+          { status: 400 },
         );
       }
-      txnDateFilter.lte = d;
+      const nextDay = new Date(d);
+      nextDay.setDate(nextDay.getDate() + 1);
+      txnDateFilter.lt = nextDay;
     }
 
     const where = {
