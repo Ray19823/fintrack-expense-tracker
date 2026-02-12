@@ -237,6 +237,21 @@ export default function DashboardPage() {
         {/* Filters */}
         <div className="card">
           <h2 className="cardTitle">Filters</h2>
+          {from === "2026-01-01" && to === "2026-01-31" && (
+            <div
+              style={{
+                marginBottom: 12,
+                fontSize: 12,
+                padding: "4px 8px",
+                background: "#eef2ff",
+                color: "#4338ca",
+                borderRadius: 999,
+                display: "inline-block",
+              }}
+            >
+              Sample dataset: Jan 2026
+            </div>
+          )}
 
           <div
             style={{
@@ -431,8 +446,9 @@ export default function DashboardPage() {
               style={{
                 padding: "9px 14px",
                 borderRadius: 8,
-                border: "1px solid #ddd",
+                border: "1px solid #d1d5db",
                 background: "white",
+                color: "#374151",
                 cursor: loading ? "not-allowed" : "pointer",
               }}
             >
