@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -50,10 +50,6 @@ export default function DashboardPage() {
   const [direction, setDirection] = useState<Direction>("EXPENSE");
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
-  const [dateResetKey, setDateResetKey] = useState(0);
-
-  const fromRef = useRef<HTMLInputElement>(null);
-  const toRef = useRef<HTMLInputElement>(null);
 
   const [data, setData] = useState<SummaryResponse | null>(null);
   const [metrics, setMetrics] = useState<MetricsResponse | null>(null);
@@ -115,10 +111,16 @@ export default function DashboardPage() {
     }
   }
 
+  const applyRange = (nextFrom: string, nextTo: string) => {
+    setFrom(nextFrom);
+    setTo(nextTo);
+    loadDashboard({ from: nextFrom, to: nextTo });
+  };
+
   useEffect(() => {
     loadDashboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [direction, from, to]);
+  }, [direction]);
 
   const hasItems = (data?.items?.length ?? 0) > 0;
 
@@ -285,9 +287,7 @@ export default function DashboardPage() {
                   )}
                   <input
                     type="date"
-                    key={`from-${dateResetKey}-${from || "empty"}`}
-                    ref={fromRef}
-                    value={from || ""}
+                    value={from}
                     onChange={(e) => setFrom(e.target.value)}
                     style={{
                       padding: 8,
@@ -299,9 +299,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setFrom("");
-                    setDateResetKey((k) => k + 1);
-                    if (fromRef.current) fromRef.current.value = "";
+                    applyRange("", to);
                   }}
                   disabled={loading || !from}
                   aria-label="Clear from date"
@@ -344,9 +342,7 @@ export default function DashboardPage() {
                   )}
                   <input
                     type="date"
-                    key={`to-${dateResetKey}-${to || "empty"}`}
-                    ref={toRef}
-                    value={to || ""}
+                    value={to}
                     onChange={(e) => setTo(e.target.value)}
                     style={{
                       padding: 8,
@@ -358,9 +354,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setTo("");
-                    setDateResetKey((k) => k + 1);
-                    if (toRef.current) toRef.current.value = "";
+                    applyRange(from, "");
                   }}
                   disabled={loading || !to}
                   aria-label="Clear to date"
@@ -395,14 +389,7 @@ export default function DashboardPage() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                setFrom("");
-                setTo("");
-                setDateResetKey((k) => k + 1);
-                if (fromRef.current) fromRef.current.value = "";
-                if (toRef.current) toRef.current.value = "";
-                loadDashboard({ from: "", to: "" });
-              }}
+              onClick={() => applyRange("", "")}
               disabled={loading}
               style={{
                 padding: "9px 14px",
@@ -418,12 +405,7 @@ export default function DashboardPage() {
               type="button"
               onClick={() => {
                 const today = getTodayLocalIsoDate();
-                setFrom(today);
-                setTo(today);
-                setDateResetKey((k) => k + 1);
-                if (fromRef.current) fromRef.current.value = today;
-                if (toRef.current) toRef.current.value = today;
-                loadDashboard({ from: today, to: today });
+                applyRange(today, today);
               }}
               disabled={loading}
               style={{
@@ -436,6 +418,25 @@ export default function DashboardPage() {
               }}
             >
               Today
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const janFrom = "2026-01-01";
+                const janTo = "2026-01-31";
+                applyRange(janFrom, janTo);
+              }}
+              disabled={loading}
+              style={{
+                padding: "9px 14px",
+                borderRadius: 8,
+                border: "1px solid #ddd",
+                background: "white",
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
+            >
+              Jan sample
             </button>
           </div>
         </div>
