@@ -58,7 +58,7 @@ export async function POST(req) {
     });
 
     // Set session cookie on response
-    setSessionCookie(res, token, expiresAt);
+    await setSessionCookie(token, expiresAt);
 
     return res;
   } catch (e) {
