@@ -206,22 +206,38 @@ export default function DashboardPage() {
         }}
       >
         <h1 style={{ marginBottom: 0, fontSize: 28 }}>FinTrack Dashboard</h1>
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={loggingOut}
-          style={{
-            padding: "8px 16px",
-            borderRadius: 8,
-            border: "1px solid #d1d5db",
-            background: "white",
-            color: "#374151",
-            fontSize: 13,
-            cursor: loggingOut ? "not-allowed" : "pointer",
-          }}
-        >
-          {loggingOut ? "Logging out…" : "Log out"}
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <a
+            href="/reports"
+            style={{
+              padding: "8px 16px",
+              borderRadius: 8,
+              border: "1px solid #d1d5db",
+              background: "white",
+              color: "#374151",
+              fontSize: 13,
+              textDecoration: "none",
+            }}
+          >
+            Reports
+          </a>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            style={{
+              padding: "8px 16px",
+              borderRadius: 8,
+              border: "1px solid #d1d5db",
+              background: "white",
+              color: "#374151",
+              fontSize: 13,
+              cursor: loggingOut ? "not-allowed" : "pointer",
+            }}
+          >
+            {loggingOut ? "Logging out…" : "Log out"}
+          </button>
+        </div>
       </div>
       <p style={{ marginTop: 0, color: "#666" }}>
         Category breakdown (pie chart) powered by my aggregation API.
