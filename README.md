@@ -7,7 +7,7 @@ This project was built as a fullstack application demonstrating authentication, 
 ---
 
 ## 🚀 Live Demo
-(After deployment, paste your Vercel URL here)
+https://fintrack-expense-tracker-eosin.vercel.app/
 
 https://your-vercel-url.vercel.app
 
