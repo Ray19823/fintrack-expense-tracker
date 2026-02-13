@@ -13,7 +13,7 @@ import {
   Legend,
   type ChartOptions,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Chart } from "react-chartjs-2";
 
 ChartJS.register(
   CategoryScale,
@@ -50,6 +50,7 @@ type TrendRow = {
   income: string;
   expense: string;
   net: string;
+  netWorth: string;
   txCount: number;
 };
 
@@ -108,27 +109,43 @@ export default function ReportsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const trendData = trends
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const trendData: any = trends
     ? {
         labels: trends.data.map((r) => r.month),
         datasets: [
           {
+            type: "bar" as const,
             label: "Income",
             data: trends.data.map((r) => Number(r.income)),
             backgroundColor: "#22c55e",
             borderRadius: 4,
           },
           {
+            type: "bar" as const,
             label: "Expense",
             data: trends.data.map((r) => Number(r.expense)),
             backgroundColor: "#ef4444",
             borderRadius: 4,
           },
           {
+            type: "bar" as const,
             label: "Net",
             data: trends.data.map((r) => Number(r.net)),
             backgroundColor: "#6366f1",
             borderRadius: 4,
+          },
+          {
+            type: "line" as const,
+            label: "Net Worth",
+            data: trends.data.map((r) => Number(r.netWorth)),
+            borderColor: "#f59e0b",
+            backgroundColor: "#fef3c7",
+            borderWidth: 2,
+            pointRadius: 4,
+            pointBackgroundColor: "#f59e0b",
+            tension: 0.3,
+            fill: false,
           },
         ],
       }
@@ -352,50 +369,75 @@ export default function ReportsPage() {
                       >
                         Net
                       </th>
+                      <th
+                        style={{
+                          padding: "8px 12px",
+                          color: "#6b7280",
+                          textAlign: "right",
+                        }}
+                      >
+                        Net Worth
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {balance.monthly.map((row) => {
-                      const rowNet = Number(row.net);
-                      return (
-                        <tr
-                          key={row.month}
-                          style={{ borderBottom: "1px solid #f3f4f6" }}
-                        >
-                          <td style={{ padding: "8px 12px", fontWeight: 500 }}>
-                            {row.month}
-                          </td>
-                          <td
-                            style={{
-                              padding: "8px 12px",
-                              textAlign: "right",
-                              color: "#16a34a",
-                            }}
+                    {(() => {
+                      let cumNw = 0;
+                      return balance.monthly.map((row) => {
+                        const rowNet = Number(row.net);
+                        cumNw += rowNet;
+                        return (
+                          <tr
+                            key={row.month}
+                            style={{ borderBottom: "1px solid #f3f4f6" }}
                           >
-                            {Number(row.income).toFixed(2)}
-                          </td>
-                          <td
-                            style={{
-                              padding: "8px 12px",
-                              textAlign: "right",
-                              color: "#dc2626",
-                            }}
-                          >
-                            {Number(row.expense).toFixed(2)}
-                          </td>
-                          <td
-                            style={{
-                              padding: "8px 12px",
-                              textAlign: "right",
-                              fontWeight: 600,
-                              color: rowNet >= 0 ? "#16a34a" : "#dc2626",
-                            }}
-                          >
-                            {rowNet.toFixed(2)}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            <td
+                              style={{ padding: "8px 12px", fontWeight: 500 }}
+                            >
+                              {row.month}
+                            </td>
+                            <td
+                              style={{
+                                padding: "8px 12px",
+                                textAlign: "right",
+                                color: "#16a34a",
+                              }}
+                            >
+                              {Number(row.income).toFixed(2)}
+                            </td>
+                            <td
+                              style={{
+                                padding: "8px 12px",
+                                textAlign: "right",
+                                color: "#dc2626",
+                              }}
+                            >
+                              {Number(row.expense).toFixed(2)}
+                            </td>
+                            <td
+                              style={{
+                                padding: "8px 12px",
+                                textAlign: "right",
+                                fontWeight: 600,
+                                color: rowNet >= 0 ? "#16a34a" : "#dc2626",
+                              }}
+                            >
+                              {rowNet.toFixed(2)}
+                            </td>
+                            <td
+                              style={{
+                                padding: "8px 12px",
+                                textAlign: "right",
+                                fontWeight: 600,
+                                color: cumNw >= 0 ? "#d97706" : "#dc2626",
+                              }}
+                            >
+                              {cumNw.toFixed(2)}
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>
@@ -442,7 +484,7 @@ export default function ReportsPage() {
 
             {trendData ? (
               <div style={{ maxWidth: 900 }}>
-                <Bar data={trendData} options={barOptions} />
+                <Chart type="bar" data={trendData} options={barOptions} />
               </div>
             ) : (
               <p>No trend data.</p>

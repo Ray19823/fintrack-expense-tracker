@@ -58,13 +58,19 @@ export async function GET(request) {
       bucket.count++;
     }
 
-    const data = [...monthMap.values()].map((m) => ({
-      month: m.month,
-      income: m.income.toFixed(2),
-      expense: m.expense.toFixed(2),
-      net: (m.income - m.expense).toFixed(2),
-      txCount: m.count,
-    }));
+    let cumulative = 0;
+    const data = [...monthMap.values()].map((m) => {
+      const net = m.income - m.expense;
+      cumulative += net;
+      return {
+        month: m.month,
+        income: m.income.toFixed(2),
+        expense: m.expense.toFixed(2),
+        net: net.toFixed(2),
+        netWorth: cumulative.toFixed(2),
+        txCount: m.count,
+      };
+    });
 
     return Response.json({
       months,
