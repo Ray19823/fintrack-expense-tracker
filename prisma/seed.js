@@ -4,7 +4,7 @@
   const { PrismaClient } = await import("@prisma/client");
   const { Pool } = await import("pg");
   const { PrismaPg } = await import("@prisma/adapter-pg");
-  const crypto = await import("crypto");
+  const { randomBytes, scryptSync } = await import("crypto");
 
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -21,8 +21,8 @@
       (await prisma.user.findUnique({ where: { email: defaultEmail } })) ??
       (await prisma.user.create({
         data: (() => {
-          const salt = crypto.randomBytes(16).toString("hex");
-          const hash = crypto.scryptSync("123456", salt, 64).toString("hex");
+          const salt = randomBytes(16).toString("hex");
+          const hash = scryptSync("123456", salt, 64).toString("hex");
           return {
             email: defaultEmail,
             passwordSalt: salt,
@@ -89,6 +89,7 @@
 
     // ✅ Step 3: define sample transactions
     const sampleTxns = [
+      // Jan 2026
       {
         userId: user.id,
         categoryId: salary.id,
@@ -121,20 +122,27 @@
         txnDate: new Date("2026-01-05"),
         description: "Utilities",
       },
+      // Feb 2026
+      {
+        userId: user.id,
+        categoryId: food.id,
+        direction: "EXPENSE",
+        amount: "18.90",
+        txnDate: new Date("2026-02-02"),
+        description: "Dinner",
+      },
+      {
+        userId: user.id,
+        categoryId: transport.id,
+        direction: "EXPENSE",
+        amount: "3.10",
+        txnDate: new Date("2026-02-04"),
+        description: "Bus",
+      },
     ];
 
     // ✅ Step 4: insert data(sample transactions)
-    for (const t of sampleTxns) {
-      const exists = await prisma.transaction.findFirst({
-        where: t,
-        select: { id: true },
-      });
-
-      if (!exists) {
-        await prisma.transaction.create({ data: t });
-      }
-    }
-
+    await prisma.transaction.createMany({ data: sampleTxns });
     console.log("Seeded sample transactions");
   }
 
