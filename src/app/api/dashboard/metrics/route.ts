@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 
 function parseDateParam(s: string | null) {
   if (!s) return null;
@@ -10,27 +11,30 @@ function parseDateParam(s: string | null) {
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const userEmail = url.searchParams.get("userEmail") ?? "default@fintrack.local";
 
     const from = parseDateParam(url.searchParams.get("from"));
-    const to = parseDateParam(url.searchParams.get("to"));
+    const toRaw = parseDateParam(url.searchParams.get("to"));
 
-    // User (temporary until auth is wired)
-    const user = await prisma.user.findFirst({
-      where: { email: userEmail },
-      select: { id: true },
-    });
+    // ✅ Session user (auth)
+    const user = await requireUser(); // throws { status: 401 } when not logged in
 
-    if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
-    }
+    // ✅ Make "to" inclusive by converting it to < nextDay (same logic style as summary)
+    const toExclusive = toRaw
+      ? new Date(
+          Date.UTC(
+            toRaw.getUTCFullYear(),
+            toRaw.getUTCMonth(),
+            toRaw.getUTCDate() + 1,
+          ),
+        )
+      : null;
 
     const whereDate =
-      from || to
+      from || toExclusive
         ? {
             txnDate: {
               ...(from ? { gte: from } : {}),
-              ...(to ? { lte: to } : {}),
+              ...(toExclusive ? { lt: toExclusive } : {}),
             },
           }
         : {};
@@ -65,8 +69,19 @@ export async function GET(request: Request) {
         txCount: (incomeAgg._count ?? 0) + (expenseAgg._count ?? 0),
       },
     });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error(err);
+
+    const status =
+      err && typeof err === "object" && "status" in err
+        ? (err as { status?: number }).status
+        : undefined;
+
+    // ✅ Proper 401 instead of “Server error”
+    if (status === 401) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
