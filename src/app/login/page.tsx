@@ -5,18 +5,24 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const endpoint =
+        mode === "login" ? "/api/auth/login" : "/api/auth/register";
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -25,7 +31,28 @@ export default function LoginPage() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setError(data.error || `Login failed (${res.status})`);
+        setError(
+          data.error ||
+            `${mode === "login" ? "Login" : "Registration"} failed (${res.status})`,
+        );
+        return;
+      }
+
+      if (mode === "register") {
+        setSuccess("Account created! Signing you in…");
+        // Auto-login after successful registration
+        const loginRes = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        if (loginRes.ok) {
+          router.push("/dashboard");
+          return;
+        }
+        // If auto-login fails, switch to login mode
+        setMode("login");
+        setSuccess("Account created! Please sign in.");
         return;
       }
 
@@ -59,7 +86,9 @@ export default function LoginPage() {
       >
         <h1 style={{ margin: "0 0 4px", fontSize: 24 }}>FinTrack</h1>
         <p style={{ margin: "0 0 24px", color: "#6b7280", fontSize: 14 }}>
-          Sign in to your account
+          {mode === "login"
+            ? "Sign in to your account"
+            : "Create a new account"}
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -141,6 +170,22 @@ export default function LoginPage() {
             </div>
           )}
 
+          {success && (
+            <div
+              style={{
+                marginBottom: 16,
+                padding: "10px 12px",
+                borderRadius: 8,
+                background: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                color: "#15803d",
+                fontSize: 13,
+              }}
+            >
+              {success}
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
@@ -156,13 +201,78 @@ export default function LoginPage() {
               cursor: loading ? "not-allowed" : "pointer",
             }}
           >
-            {loading ? "Signing in…" : "Sign in"}
+            {loading
+              ? mode === "login"
+                ? "Signing in…"
+                : "Creating account…"
+              : mode === "login"
+                ? "Sign in"
+                : "Create account"}
           </button>
         </form>
 
         <p
           style={{
             marginTop: 20,
+            fontSize: 13,
+            color: "#6b7280",
+            textAlign: "center",
+          }}
+        >
+          {mode === "login" ? (
+            <>
+              Don&apos;t have an account?{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("register");
+                  setError("");
+                  setSuccess("");
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#4f46e5",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  padding: 0,
+                  textDecoration: "underline",
+                }}
+              >
+                Sign up
+              </button>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("login");
+                  setError("");
+                  setSuccess("");
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#4f46e5",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  padding: 0,
+                  textDecoration: "underline",
+                }}
+              >
+                Sign in
+              </button>
+            </>
+          )}
+        </p>
+
+        <p
+          style={{
+            marginTop: 12,
             fontSize: 12,
             color: "#9ca3af",
             textAlign: "center",
