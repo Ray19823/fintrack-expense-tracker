@@ -31,9 +31,6 @@ export async function GET(request) {
 
     // Resolve user from session (auth)
     const user = await requireUser();
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     // Optional date range (inclusive)
     const txnDateFilter = {};
@@ -112,6 +109,8 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error(err);
+    if (err?.status === 401)
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     return Response.json({ error: "Server error" }, { status: 500 });
   }
 }

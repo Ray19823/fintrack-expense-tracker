@@ -56,5 +56,6 @@ export async function getSessionUser() {
 
 export async function requireUser() {
   const user = await getSessionUser();
-  return user; // return null instead of throwing
+  if (!user) throw { status: 401 };
+  return user;
 }

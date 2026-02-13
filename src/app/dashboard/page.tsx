@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -47,6 +48,7 @@ function getTodayLocalIsoDate(): string {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [direction, setDirection] = useState<Direction>("EXPENSE");
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
@@ -56,6 +58,7 @@ export default function DashboardPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
+  const [loggingOut, setLoggingOut] = useState(false);
 
   async function loadDashboard(overrides?: { from?: string; to?: string }) {
     setLoading(true);
@@ -103,12 +106,26 @@ export default function DashboardPage() {
     } catch (e: unknown) {
       const message =
         e instanceof Error ? e.message : "Failed to load dashboard";
+      if (message === "Unauthorized") {
+        router.push("/login");
+        return;
+      }
       setError(message);
       setData(null);
       setMetrics(null);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // ignore — we redirect regardless
+    }
+    router.push("/login");
   }
 
   const applyRange = (nextFrom: string, nextTo: string) => {
@@ -180,7 +197,32 @@ export default function DashboardPage() {
 
   return (
     <main className="container">
-      <h1 style={{ marginBottom: 4, fontSize: 28 }}>FinTrack Dashboard</h1>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 4,
+        }}
+      >
+        <h1 style={{ marginBottom: 0, fontSize: 28 }}>FinTrack Dashboard</h1>
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          style={{
+            padding: "8px 16px",
+            borderRadius: 8,
+            border: "1px solid #d1d5db",
+            background: "white",
+            color: "#374151",
+            fontSize: 13,
+            cursor: loggingOut ? "not-allowed" : "pointer",
+          }}
+        >
+          {loggingOut ? "Logging out…" : "Log out"}
+        </button>
+      </div>
       <p style={{ marginTop: 0, color: "#666" }}>
         Category breakdown (pie chart) powered by my aggregation API.
       </p>

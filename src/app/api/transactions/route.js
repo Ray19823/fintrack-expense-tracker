@@ -1,26 +1,19 @@
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 
-// GET /api/transactions?take=20&cursor=<txnId>&userEmail=...
+// GET /api/transactions?take=20&cursor=<txnId>
 export async function GET(request) {
   try {
+    const user = await requireUser();
     const url = new URL(request.url);
 
     const takeRaw = url.searchParams.get("take");
     const cursor = url.searchParams.get("cursor"); //transactionId cursor
-    const userEmail = url.searchParams.get("userEmail") ?? "default@fintrack.local";
 
-    // Resolve user (temporary approach until auth exists)
-    const take = Math.min(100, Math.max(1, Number.parseInt(takeRaw ?? "20", 10))
+    const take = Math.min(
+      100,
+      Math.max(1, Number.parseInt(takeRaw ?? "20", 10)),
     );
-
-    const user = await prisma.user.findFirst({
-      where: { email: userEmail },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
-    }
 
     // Fetch take + 1 to knnow if there is a next page
     const rows = await prisma.transaction.findMany({
@@ -40,26 +33,27 @@ export async function GET(request) {
       take: take + 1,
       ...(cursor
         ? {
-           cursor: { id: cursor },
-           skip: 1, // skip the cursor row itself
+            cursor: { id: cursor },
+            skip: 1, // skip the cursor row itself
           }
         : {}),
-        });
+    });
 
     const hasNextPage = rows.length > take;
     const transactions = hasNextPage ? rows.slice(0, take) : rows;
 
     const nextCursor = hasNextPage
-      ? transactions[transactions.length - 1]?.id ?? null
+      ? (transactions[transactions.length - 1]?.id ?? null)
       : null;
 
-    return Response.json({ 
-      transactions, 
-      pageInfo: { take, nextCursor, hasNextPage, 
-      },
-     });
+    return Response.json({
+      transactions,
+      pageInfo: { take, nextCursor, hasNextPage },
+    });
   } catch (err) {
     console.error(err);
+    if (err?.status === 401)
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -67,30 +61,23 @@ export async function GET(request) {
 // POST /api/transactions
 export async function POST(request) {
   try {
+    const user = await requireUser();
     const body = await request.json();
 
-    const {
-      userEmail = "default@fintrack.local",
-      categoryId,
-      direction,
-      amount,
-      txnDate,
-      description,
-    } = body ?? {};
+    const { categoryId, direction, amount, txnDate, description } = body ?? {};
 
     // ---- Basic validation ----
-    if (!userEmail || typeof userEmail !== "string") {
-      return Response.json({ error: "userEmail is required" }, { status: 400 });
-    }
-
     if (!categoryId || typeof categoryId !== "string") {
-      return Response.json({ error: "categoryId is required" }, { status: 400 });
+      return Response.json(
+        { error: "categoryId is required" },
+        { status: 400 },
+      );
     }
 
     if (direction !== "INCOME" && direction !== "EXPENSE") {
       return Response.json(
         { error: "direction must be INCOME or EXPENSE" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -100,7 +87,7 @@ export async function POST(request) {
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       return Response.json(
         { error: "amount must be a positive number" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -108,7 +95,7 @@ export async function POST(request) {
     if (!txnDate || typeof txnDate !== "string") {
       return Response.json(
         { error: "txnDate is required (YYYY-MM-DD)" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -116,31 +103,18 @@ export async function POST(request) {
     if (Number.isNaN(dateObj.getTime())) {
       return Response.json(
         { error: "txnDate must be a valid date string (YYYY-MM-DD)" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // ---- Resolve user (temporary approach until auth exists) ----
-    const user = await prisma.user.findFirst({
-      where: { email: userEmail },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // ---- Ensure category belongs to this user ----
+    // ---- Ensure category exists ----
     const category = await prisma.category.findFirst({
-      where: { id: categoryId, userId: user.id },
+      where: { id: categoryId },
       select: { id: true },
     });
 
     if (!category) {
-      return Response.json(
-        { error: "Category not found for this user" },
-        { status: 404 }
-      );
+      return Response.json({ error: "Category not found" }, { status: 404 });
     }
 
     // ---- Create transaction ----
@@ -170,6 +144,8 @@ export async function POST(request) {
     return Response.json({ transaction: created }, { status: 201 });
   } catch (err) {
     console.error(err);
+    if (err?.status === 401)
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -177,10 +153,10 @@ export async function POST(request) {
 // PUT /api/transactions
 export async function PUT(req) {
   try {
+    const user = await requireUser();
     const body = await req.json();
 
     const {
-      userEmail = "default@fintrack.local",
       transactionId,
       categoryId,
       direction,
@@ -190,17 +166,10 @@ export async function PUT(req) {
     } = body ?? {};
 
     if (!transactionId) {
-      return Response.json({ error: "transactionId is required" }, { status: 400 });
-    }
-
-    // Find user
-    const user = await prisma.user.findFirst({
-      where: { email: userEmail },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
+      return Response.json(
+        { error: "transactionId is required" },
+        { status: 400 },
+      );
     }
 
     // Ensure the transaction belongs to this user
@@ -217,35 +186,35 @@ export async function PUT(req) {
     const data = {};
 
     if (categoryId) {
-    const cat = await prisma.category.findFirst({
-    where: { id: categoryId, userId: user.id },
-    select: { id: true },
-  });
+      const cat = await prisma.category.findFirst({
+        where: { id: categoryId },
+        select: { id: true },
+      });
 
-    if (!cat) {
-    return Response.json(
-      { error: "Category not found for this user" },
-      { status: 404 }
-    );
-   }
+      if (!cat) {
+        return Response.json({ error: "Category not found" }, { status: 404 });
+      }
 
-    data.categoryId = cat.id;
-  }
+      data.categoryId = cat.id;
+    }
 
     if (direction) {
-    if (direction !== "INCOME" && direction !== "EXPENSE") {
-    return Response.json(
-      { error: "direction must be INCOME or EXPENSE" },
-      { status: 400 }
-    );
-   }
-    data.direction = direction;
-  }
+      if (direction !== "INCOME" && direction !== "EXPENSE") {
+        return Response.json(
+          { error: "direction must be INCOME or EXPENSE" },
+          { status: 400 },
+        );
+      }
+      data.direction = direction;
+    }
 
     if (amount !== undefined && amount !== null) {
       const num = typeof amount === "string" ? Number(amount) : amount;
       if (!Number.isFinite(num) || num <= 0) {
-        return Response.json({ error: "amount must be a positive number" }, { status: 400 });
+        return Response.json(
+          { error: "amount must be a positive number" },
+          { status: 400 },
+        );
       }
       data.amount = num.toFixed(2);
     }
@@ -253,7 +222,10 @@ export async function PUT(req) {
     if (txnDate) {
       const d = new Date(txnDate);
       if (Number.isNaN(d.getTime())) {
-        return Response.json({ error: "txnDate must be a valid date" }, { status: 400 });
+        return Response.json(
+          { error: "txnDate must be a valid date" },
+          { status: 400 },
+        );
       }
       data.txnDate = d;
     }
@@ -264,7 +236,10 @@ export async function PUT(req) {
 
     // Nothing to update?
     if (Object.keys(data).length === 0) {
-      return Response.json({ error: "No fields provided to update" }, { status: 400 });
+      return Response.json(
+        { error: "No fields provided to update" },
+        { status: 400 },
+      );
     }
 
     const updated = await prisma.transaction.update({
@@ -284,6 +259,8 @@ export async function PUT(req) {
     return Response.json({ transaction: updated });
   } catch (err) {
     console.error(err);
+    if (err?.status === 401)
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -291,24 +268,16 @@ export async function PUT(req) {
 // DELETE /api/transactions
 export async function DELETE(req) {
   try {
+    const user = await requireUser();
     const body = await req.json();
 
-    const {
-      userEmail = "default@fintrack.local",
-      transactionId,
-    } = body ?? {};
+    const { transactionId } = body ?? {};
 
     if (!transactionId) {
-      return Response.json({ error: "transactionId is required" }, { status: 400 });
-    }
-
-    const user = await prisma.user.findFirst({
-      where: { email: userEmail },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
+      return Response.json(
+        { error: "transactionId is required" },
+        { status: 400 },
+      );
     }
 
     // Only delete if it belongs to the user
@@ -323,6 +292,8 @@ export async function DELETE(req) {
     return Response.json({ success: true, deletedCount: deleted.count });
   } catch (err) {
     console.error(err);
+    if (err?.status === 401)
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     return Response.json({ error: "Server error" }, { status: 500 });
   }
 }
