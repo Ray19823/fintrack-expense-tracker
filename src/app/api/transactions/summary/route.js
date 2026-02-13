@@ -1,8 +1,9 @@
 // src/app/api/transactions/summary/route.js
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 
 /**
- * GET /api/transactions/summary?userEmail=...&direction=EXPENSE&from=YYYY-MM-DD&to=YYYY-MM-DD
+ * GET /api/transactions/summary?direction=EXPENSE&from=YYYY-MM-DD&to=YYYY-MM-DD
  *
  * Returns category totals for pie chart.
  * - direction defaults to EXPENSE (for spending pie)
@@ -11,9 +12,6 @@ import { prisma } from "@/lib/prisma";
 export async function GET(request) {
   try {
     const url = new URL(request.url);
-
-    const userEmail =
-      url.searchParams.get("userEmail") ?? "default@fintrack.local";
 
     const directionRaw = url.searchParams.get("direction") ?? "EXPENSE";
     const direction =
@@ -31,14 +29,10 @@ export async function GET(request) {
     const from = url.searchParams.get("from"); // YYYY-MM-DD
     const to = url.searchParams.get("to"); // YYYY-MM-DD
 
-    // Resolve user (same pattern as your other routes)
-    const user = await prisma.user.findFirst({
-      where: { email: userEmail },
-      select: { id: true },
-    });
-
+    // Resolve user from session (auth)
+    const user = await requireUser();
     if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Optional date range (inclusive)

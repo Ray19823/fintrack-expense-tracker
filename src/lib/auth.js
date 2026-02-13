@@ -53,3 +53,8 @@ export async function getSessionUser() {
 
   return session.user;
 }
+
+export async function requireUser() {
+  const user = await getSessionUser();
+  return user; // return null instead of throwing
+}
