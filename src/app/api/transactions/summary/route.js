@@ -81,10 +81,13 @@ export async function GET(request) {
 
     // Get category labels (name/type) for those IDs
     const categoryIds = rows.map((r) => r.categoryId);
-    const categories = await prisma.category.findMany({
-      where: { id: { in: categoryIds }, userId: user.id },
-      select: { id: true, name: true, type: true },
-    });
+    const categories =
+      categoryIds.length === 0
+        ? []
+        : await prisma.category.findMany({
+            where: { id: { in: categoryIds } },
+            select: { id: true, name: true, type: true },
+          });
 
     const byId = new Map(categories.map((c) => [c.id, c]));
 

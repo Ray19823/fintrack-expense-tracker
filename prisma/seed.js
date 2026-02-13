@@ -4,6 +4,7 @@
   const { PrismaClient } = await import("@prisma/client");
   const { Pool } = await import("pg");
   const { PrismaPg } = await import("@prisma/adapter-pg");
+  const crypto = await import("crypto");
 
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -19,7 +20,15 @@
     const user =
       (await prisma.user.findUnique({ where: { email: defaultEmail } })) ??
       (await prisma.user.create({
-        data: { name: "Default User", email: defaultEmail },
+        data: (() => {
+          const salt = crypto.randomBytes(16).toString("hex");
+          const hash = crypto.scryptSync("123456", salt, 64).toString("hex");
+          return {
+            email: defaultEmail,
+            passwordSalt: salt,
+            passwordHash: hash,
+          };
+        })(),
       }));
 
     // CATEGORY SEEDING
@@ -35,14 +44,13 @@
     for (const c of categories) {
       await prisma.category.upsert({
         where: {
-          userId_name_type: {
-            userId: user.id,
+          name_type: {
             name: c.name,
             type: c.type,
           },
         },
         update: {},
-        create: { userId: user.id, ...c },
+        create: c,
       });
     }
 
@@ -50,22 +58,22 @@
 
     // TRANSACTION SEEDING — inside main
     const salary = await prisma.category.findFirst({
-      where: { userId: user.id, name: "Salary", type: "INCOME" },
+      where: { name: "Salary", type: "INCOME" },
       select: { id: true },
     });
 
     const food = await prisma.category.findFirst({
-      where: { userId: user.id, name: "Food", type: "EXPENSE" },
+      where: { name: "Food", type: "EXPENSE" },
       select: { id: true },
     });
 
     const transport = await prisma.category.findFirst({
-      where: { userId: user.id, name: "Transport", type: "EXPENSE" },
+      where: { name: "Transport", type: "EXPENSE" },
       select: { id: true },
     });
 
     const bills = await prisma.category.findFirst({
-      where: { userId: user.id, name: "Bills", type: "EXPENSE" },
+      where: { name: "Bills", type: "EXPENSE" },
       select: { id: true },
     });
 
@@ -73,7 +81,7 @@
     if (!salary || !food || !transport || !bills) {
       throw new Error("Missing seeded categories");
     }
-    
+
     // ✅ Step 2: reset transactions
     await prisma.transaction.deleteMany({
       where: { userId: user.id },
