@@ -269,17 +269,6 @@ export default function LoginPage() {
             </>
           )}
         </p>
-
-        <p
-          style={{
-            marginTop: 12,
-            fontSize: 12,
-            color: "#9ca3af",
-            textAlign: "center",
-          }}
-        >
-          Demo: default@fintrack.local / 123456
-        </p>
       </div>
     </main>
   );
