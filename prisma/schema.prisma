@@ -6,48 +6,37 @@ datasource db {
   provider = "postgresql"
 }
 
-enum TxnDirection {
-  INCOME
-  EXPENSE
-}
-
-enum CategoryType {
-  INCOME
-  EXPENSE
-}
-
 model User {
   id           String        @id @default(uuid())
   email        String        @unique
+  createdAt    DateTime      @default(now())
   passwordHash String
   passwordSalt String
-  createdAt    DateTime      @default(now())
+  budgets      Budget[]
   sessions     Session[]
   transactions Transaction[]
-  budgets      Budget[]
 }
 
 model Session {
   id        String   @id @default(uuid())
   token     String   @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
 }
 
 model Category {
-  id        String       @id @default(uuid())
+  id        String        @id @default(uuid())
   name      String
   type      CategoryType
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-
-  txns    Transaction[]
-  budgets Budget[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  budgets   Budget[]
+  txns      Transaction[]
 
   @@unique([name, type])
 }
@@ -57,14 +46,13 @@ model Transaction {
   userId      String
   categoryId  String
   direction   TxnDirection
-  amount      Decimal // store positive
+  amount      Decimal
   txnDate     DateTime     @db.Date
   description String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  category    Category     @relation(fields: [categoryId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, txnDate])
   @@index([categoryId])
@@ -78,10 +66,19 @@ model Budget {
   limitAmount Decimal
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, categoryId, monthStart])
   @@index([userId, monthStart])
+}
+
+enum TxnDirection {
+  INCOME
+  EXPENSE
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
 }
