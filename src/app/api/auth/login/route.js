@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword, newSessionToken, setSessionCookie } from "@/lib/auth";
 
+export const runtime = "nodejs";
+
 export async function POST(req) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -57,8 +59,13 @@ export async function POST(req) {
       expiresAt,
     });
 
-    // Set session cookie on response
-    await setSessionCookie(token, expiresAt);
+    res.cookies.set("fintrack_session", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      expires: expiresAt,
+    });
 
     return res;
   } catch (e) {

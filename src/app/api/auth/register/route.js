@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { randomBytes, scryptSync } from "crypto";
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs";
+
 export async function POST(req) {
   try {
     const body = await req.json().catch(() => ({}));
