@@ -4,8 +4,12 @@ import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const { email, password } = body;
+    const body = await req.json().catch(() => ({}));
+
+    const email = String(body.email ?? "")
+      .trim()
+      .toLowerCase();
+    const password = String(body.password ?? "");
 
     if (!email || !password) {
       return NextResponse.json(
@@ -14,11 +18,7 @@ export async function POST(req) {
       );
     }
 
-    // Check if email already exists
-    const existing = await prisma.user.findUnique({
-      where: { email },
-    });
-
+    const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return NextResponse.json(
         { error: "Email already registered" },
@@ -26,19 +26,11 @@ export async function POST(req) {
       );
     }
 
-    // Generate salt
     const salt = randomBytes(16).toString("hex");
-
-    // Hash password
     const hash = scryptSync(password, salt, 64).toString("hex");
 
-    // Create user
     await prisma.user.create({
-      data: {
-        email,
-        passwordHash: hash,
-        passwordSalt: salt,
-      },
+      data: { email, passwordHash: hash, passwordSalt: salt },
     });
 
     return NextResponse.json({ message: "User registered successfully" });
