@@ -495,19 +495,31 @@ export default function DashboardPage() {
 
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 const janFrom = "2026-01-01";
                 const janTo = "2026-01-31";
-                applyRange(janFrom, janTo);
-              }}
-              disabled={loading}
-              style={{
-                padding: "9px 14px",
-                borderRadius: 8,
-                border: "1px solid #d1d5db",
-                background: "white",
-                color: "#374151",
-                cursor: loading ? "not-allowed" : "pointer",
+
+                setLoading(true);
+                setError("");
+
+                try {
+                  const seedRes = await fetch("/api/sample/jan", {
+                    method: "POST",
+                  });
+                  const seedBody = await seedRes.json().catch(() => ({}));
+
+                  if (!seedRes.ok) {
+                    throw new Error(
+                      seedBody?.error ?? `Seed failed (${seedRes.status})`,
+                    );
+                  }
+
+                  applyRange(janFrom, janTo);
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "Seed failed");
+                } finally {
+                  setLoading(false);
+                }
               }}
             >
               Jan sample
