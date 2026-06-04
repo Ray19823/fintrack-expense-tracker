@@ -208,6 +208,36 @@ export default function DashboardPage() {
         <h1 style={{ marginBottom: 0, fontSize: 28 }}>FinTrack Dashboard</h1>
         <div style={{ display: "flex", gap: 8 }}>
           <a
+            href="/transactions/new"
+            style={{
+              padding: "8px 16px",
+              borderRadius: 8,
+              border: "1px solid #d1d5db",
+              background: "white",
+              color: "#374151",
+              fontSize: 13,
+              textDecoration: "none",
+            }}
+          >
+            Add Transaction
+          </a>
+
+          <a
+            href="/reports"
+            style={{
+              padding: "8px 16px",
+              borderRadius: 8,
+              border: "1px solid #d1d5db",
+              background: "white",
+              color: "#374151",
+              fontSize: 13,
+              textDecoration: "none",
+            }}
+          >
+            Add Transaction
+          </a>
+
+          <a
             href="/reports"
             style={{
               padding: "8px 16px",
