@@ -234,21 +234,6 @@ export default function DashboardPage() {
               textDecoration: "none",
             }}
           >
-            Add Transaction
-          </a>
-
-          <a
-            href="/reports"
-            style={{
-              padding: "8px 16px",
-              borderRadius: 8,
-              border: "1px solid #d1d5db",
-              background: "white",
-              color: "#374151",
-              fontSize: 13,
-              textDecoration: "none",
-            }}
-          >
             Reports
           </a>
           <button
